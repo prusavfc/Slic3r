@@ -5119,6 +5119,8 @@ void GLCanvas3D::bind_event_handlers()
         m_canvas->Bind(wxEVT_SIZE, &GLCanvas3D::on_size, this);
         m_canvas->Bind(wxEVT_IDLE, &GLCanvas3D::on_idle, this);
         m_canvas->Bind(wxEVT_CHAR, &GLCanvas3D::on_char, this);
+        m_canvas->Bind(wxEVT_KEY_DOWN, &GLCanvas3D::on_key, this);
+        m_canvas->Bind(wxEVT_KEY_UP, &GLCanvas3D::on_key, this);
         m_canvas->Bind(wxEVT_MOUSEWHEEL, &GLCanvas3D::on_mouse_wheel, this);
         m_canvas->Bind(wxEVT_TIMER, &GLCanvas3D::on_timer, this);
         m_canvas->Bind(wxEVT_LEFT_DOWN, &GLCanvas3D::on_mouse, this);
@@ -5180,6 +5182,17 @@ void GLCanvas3D::on_char(wxKeyEvent& evt)
     // see include/wx/defs.h enum wxKeyCode
     int keyCode = evt.GetKeyCode();
     int ctrlMask = wxMOD_CONTROL;
+
+#if ENABLE_IMGUI
+    auto imgui = wxGetApp().imgui();
+    if (imgui->update_key_data(evt)) {
+        render();
+        if (imgui->want_any_input()) {
+            return;
+        }
+    }
+#endif // ENABLE_IMGUI
+
 //#ifdef __APPLE__
 //    ctrlMask |= wxMOD_RAW_CONTROL;
 //#endif /* __APPLE__ */
@@ -5243,6 +5256,18 @@ void GLCanvas3D::on_char(wxKeyEvent& evt)
         }
         }
     }
+}
+
+void GLCanvas3D::on_key(wxKeyEvent& evt)
+{
+#if ENABLE_IMGUI
+    auto imgui = wxGetApp().imgui();
+    if (imgui->update_key_data(evt)) {
+        render();
+    }
+#endif // ENABLE_IMGUI
+
+    evt.Skip();   // Needed to have EVT_CHAR generated as well
 }
 
 void GLCanvas3D::on_mouse_wheel(wxMouseEvent& evt)
